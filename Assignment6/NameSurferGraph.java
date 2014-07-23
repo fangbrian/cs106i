@@ -20,6 +20,29 @@ public class NameSurferGraph extends GCanvas
 	public NameSurferGraph() {
 		addComponentListener(this);
 		//	 You fill in the rest //
+		internalList = new ArrayList <NameSurferEntry>();
+		
+	}
+	
+	private void drawGrid(){
+		int x_width = getWidth();
+		int decade = 1900;
+		for (int i = 0; i < NDECADES; i++){
+			GLine xgrid = new GLine(i*x_width/NDECADES, 0 , i*x_width/NDECADES, getHeight());
+			add(xgrid);
+			decade = 1900 + (i*10);
+			GLabel decadeLabel = new GLabel(Integer.toString(decade));
+			double height = decadeLabel.getHeight();
+			decadeLabel.setLocation( i*x_width/NDECADES, getHeight() - GRAPH_MARGIN_SIZE + height);
+			add(decadeLabel);
+
+		}
+		GLine upperMargin = new GLine(0, GRAPH_MARGIN_SIZE, x_width, GRAPH_MARGIN_SIZE);
+		GLine lowerMargin = new GLine(0, getHeight() - GRAPH_MARGIN_SIZE, x_width, getHeight() - GRAPH_MARGIN_SIZE);
+		add(upperMargin);
+		add(lowerMargin);
+
+
 	}
 	
 	/**
@@ -27,6 +50,7 @@ public class NameSurferGraph extends GCanvas
 	*/
 	public void clear() {
 		//	 You fill this in //
+
 	}
 	
 	/* Method: addEntry(entry) */
@@ -37,6 +61,7 @@ public class NameSurferGraph extends GCanvas
 	*/
 	public void addEntry(NameSurferEntry entry) {
 		// You fill this in //
+		internalList.add(entry);
 	}
 	
 	
@@ -50,6 +75,25 @@ public class NameSurferGraph extends GCanvas
 	*/
 	public void update() {
 		//	 You fill this in //
+		removeAll();
+		drawGrid();
+		drawEntries();
+
+	}
+	
+	private void drawEntries(){
+		if(internalList.size() > 0){
+			for(int i = 0; i < internalList.size(); i++){
+				drawEntry(internalList.get(i));
+			}
+		}
+	}
+	
+	private void drawEntry(NameSurferEntry entry){
+		int xWidth = getWidth();
+		int yHeight = getHeight();
+		
+		
 	}
 	
 	
@@ -60,4 +104,7 @@ public class NameSurferGraph extends GCanvas
 	public void componentMoved(ComponentEvent e) { }
 	public void componentResized(ComponentEvent e) { update(); }
 	public void componentShown(ComponentEvent e) { }
+	
+	private GRect rect;
+	private ArrayList<NameSurferEntry> internalList;
 }
