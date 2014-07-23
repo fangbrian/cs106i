@@ -56,6 +56,7 @@ public class NameSurfer extends Program implements NameSurferConstants {
 		}
 		if(e.getActionCommand().equals("Clear")){
 			println("CLEARING");
+			graph.clear();
 		}
 	}
 	

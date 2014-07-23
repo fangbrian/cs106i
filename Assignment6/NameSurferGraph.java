@@ -10,6 +10,7 @@ import acm.graphics.*;
 import java.awt.event.*;
 import java.util.*;
 import java.awt.*;
+import java.awt.Color;
 
 public class NameSurferGraph extends GCanvas
 	implements NameSurferConstants, ComponentListener {
@@ -21,6 +22,7 @@ public class NameSurferGraph extends GCanvas
 		addComponentListener(this);
 		//	 You fill in the rest //
 		internalList = new ArrayList <NameSurferEntry>();	
+		currentColor = Color.MAGENTA;
 	}
 	
 	private void drawGrid(){
@@ -34,14 +36,11 @@ public class NameSurferGraph extends GCanvas
 			double height = decadeLabel.getHeight();
 			decadeLabel.setLocation( i*x_width/NDECADES, getHeight() - GRAPH_MARGIN_SIZE + height);
 			add(decadeLabel);
-
 		}
 		GLine upperMargin = new GLine(0, GRAPH_MARGIN_SIZE, x_width, GRAPH_MARGIN_SIZE);
 		GLine lowerMargin = new GLine(0, getHeight() - GRAPH_MARGIN_SIZE, x_width, getHeight() - GRAPH_MARGIN_SIZE);
 		add(upperMargin);
 		add(lowerMargin);
-
-
 	}
 	
 	/**
@@ -49,7 +48,9 @@ public class NameSurferGraph extends GCanvas
 	*/
 	public void clear() {
 		//	 You fill this in //
-
+		internalList.clear();
+		currentColor = Color.magenta;
+		update();
 	}
 	
 	/* Method: addEntry(entry) */
@@ -94,17 +95,43 @@ public class NameSurferGraph extends GCanvas
 		double yHeight = getHeight();
 		int initialRank;
 		int nextRank;
-		yIncrement = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/MAX_RANK);
+		
+		if(currentColor == Color.MAGENTA){
+			currentColor = Color.black;
+		} else if(currentColor == Color.BLACK){
+			currentColor = Color.red;
+		} else if(currentColor == Color.RED){
+			currentColor = Color.blue;
+		} else if(currentColor == Color.BLUE){
+			currentColor = Color.magenta;
+		}
+		
 		for(int i = 0; i < NDECADES-1; i++){
 			initialRank = entry.getRank(i);
 			nextRank = entry.getRank(i+1);
-			//double xa = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK);
-			GLine nameLine = new GLine(i*xWidth/NDECADES, ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * initialRank + GRAPH_MARGIN_SIZE, 
-					(i+1)*xWidth/NDECADES, ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * nextRank + GRAPH_MARGIN_SIZE);
+			double yRankCoordinateInitial = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * initialRank + GRAPH_MARGIN_SIZE;
+			double yRankCoordinateNext = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * nextRank + GRAPH_MARGIN_SIZE;
+			if(initialRank == 0){
+				yRankCoordinateInitial = yHeight - GRAPH_MARGIN_SIZE;
+				GLabel lineLabel = new GLabel(entry.getName() + " *", 
+						i*xWidth/NDECADES, yRankCoordinateInitial);
+				lineLabel.setColor(currentColor);
+				add(lineLabel);
+			}else {
+				GLabel lineLabel = new GLabel(entry.getName() + Integer.toString(initialRank), 
+						i*xWidth/NDECADES, yRankCoordinateInitial);
+				lineLabel.setColor(currentColor);
+				add(lineLabel);
+			}
+			if(nextRank == 0){
+				yRankCoordinateNext = yHeight - GRAPH_MARGIN_SIZE;
+			}
+			
+			GLine nameLine = new GLine(i*xWidth/NDECADES, yRankCoordinateInitial, (i+1)*xWidth/NDECADES, yRankCoordinateNext);
+			nameLine.setColor(currentColor);
 			add(nameLine);
 		}
-		
-		
+
 	}
 	
 	
@@ -116,7 +143,6 @@ public class NameSurferGraph extends GCanvas
 	public void componentResized(ComponentEvent e) { update(); }
 	public void componentShown(ComponentEvent e) { }
 	
-	private GRect rect;
 	private ArrayList<NameSurferEntry> internalList;
-	private double yIncrement;
+	private Color currentColor;
 }
