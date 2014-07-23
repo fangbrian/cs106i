@@ -20,8 +20,7 @@ public class NameSurferGraph extends GCanvas
 	public NameSurferGraph() {
 		addComponentListener(this);
 		//	 You fill in the rest //
-		internalList = new ArrayList <NameSurferEntry>();
-		
+		internalList = new ArrayList <NameSurferEntry>();	
 	}
 	
 	private void drawGrid(){
@@ -62,6 +61,7 @@ public class NameSurferGraph extends GCanvas
 	public void addEntry(NameSurferEntry entry) {
 		// You fill this in //
 		internalList.add(entry);
+		drawEntry(entry);
 	}
 	
 	
@@ -90,8 +90,19 @@ public class NameSurferGraph extends GCanvas
 	}
 	
 	private void drawEntry(NameSurferEntry entry){
-		int xWidth = getWidth();
-		int yHeight = getHeight();
+		double xWidth = getWidth();
+		double yHeight = getHeight();
+		int initialRank;
+		int nextRank;
+		yIncrement = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/MAX_RANK);
+		for(int i = 0; i < NDECADES-1; i++){
+			initialRank = entry.getRank(i);
+			nextRank = entry.getRank(i+1);
+			//double xa = ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK);
+			GLine nameLine = new GLine(i*xWidth/NDECADES, ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * initialRank + GRAPH_MARGIN_SIZE, 
+					(i+1)*xWidth/NDECADES, ((getHeight() - 2*GRAPH_MARGIN_SIZE)/(double)MAX_RANK) * nextRank + GRAPH_MARGIN_SIZE);
+			add(nameLine);
+		}
 		
 		
 	}
@@ -107,4 +118,5 @@ public class NameSurferGraph extends GCanvas
 	
 	private GRect rect;
 	private ArrayList<NameSurferEntry> internalList;
+	private double yIncrement;
 }
