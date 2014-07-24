@@ -27,7 +27,6 @@ public class NameSurferDataBase implements NameSurferConstants {
  * occurs as the file is being read.
  */
 	public NameSurferDataBase(String filename) {
-		// You fill this in //
 		nameInventory = new HashMap<String, NameSurferEntry>();
 		String a = null;
 		try {
@@ -49,7 +48,6 @@ public class NameSurferDataBase implements NameSurferConstants {
  * method returns null.
  */
 	public NameSurferEntry findEntry(String name) {
-		// You need to turn this stub into a real implementation //
 		if(nameInventory.containsKey(name)){
 			return nameInventory.get(name);
 		} else return null;

@@ -19,7 +19,6 @@ public class NameSurferEntry implements NameSurferConstants {
  * decade.
  */
 	public NameSurferEntry(String line) {
-		// You fill this in //
 		int nameEnd = line.indexOf(" ");
 		name = line.substring(0, nameEnd);
 		nameRank = new int[NDECADES];
@@ -41,10 +40,7 @@ public class NameSurferEntry implements NameSurferConstants {
  * Returns the name associated with this entry.
  */
 	public String getName() {
-		// You need to turn this stub into a real implementation //
-		
 		return name;
-		//return null;
 	}
 
 /* Method: getRank(decade) */
@@ -56,7 +52,6 @@ public class NameSurferEntry implements NameSurferConstants {
  * not appear in a decade, the rank value is 0.
  */
 	public int getRank(int decade) {
-		// You need to turn this stub into a real implementation //
 		if(decade < NDECADES){
 			return nameRank[decade];
 		} else return 0;
@@ -68,7 +63,6 @@ public class NameSurferEntry implements NameSurferConstants {
  * NameSurferEntry.
  */
 	public String toString() {
-		// You need to turn this stub into a real implementation //
 		String returnName = name + " [ "; 
 		String temp = returnName;
 		for(int i = 0; i < NDECADES; i++){
