@@ -1,9 +1,14 @@
 package com.example.fangb.testdatabase;
 
         import android.app.Activity;
+        import android.content.Context;
         import android.database.Cursor;
+        import android.location.Location;
+        import android.location.LocationListener;
+        import android.location.LocationManager;
         import android.os.Bundle;
         import android.telephony.SmsManager;
+        import android.util.Log;
         import android.view.View;
         import android.widget.EditText;
         import android.widget.TextView;
@@ -26,6 +31,15 @@ public class MyActivity extends Activity {
     DBAdapter myDb;
     private EditText nameButton;
     private EditText phoneButton;
+    private EditText longitudeButton;
+    private EditText latitudeButton;
+    public TextView textView;
+    private LocationManager gpsManager;
+    private LocationListener gpsListener;
+    private double longitude;
+    private double latitude;
+    private Location destination = null;
+    private static int DESTINATION_THRESHOLD_METERS = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,9 +48,43 @@ public class MyActivity extends Activity {
 
         nameButton = (EditText) findViewById(R.id.nameText);
         phoneButton = (EditText) findViewById(R.id.phoneText);
-
+        longitudeButton = (EditText) findViewById(R.id.longitudeText);
+        latitudeButton = (EditText) findViewById(R.id.latitudeText);
+        latitude = 0;
+        longitude = 0;
         openDB();
+        initializeLocation();
     }
+
+    public class LocationManagerHelper implements LocationListener {
+
+        @Override
+        public void onLocationChanged(Location loc) {
+            if(loc != null) {
+                double lat = loc.getLatitude();
+                double longi = loc.getLongitude();
+                lat = 10;
+                longi = 10;
+                String msg = "Long: " + lat + " Lat: " + longi;
+                displayText(msg);
+            }
+        }
+
+
+        @Override
+        public void onProviderDisabled(String provider) { }
+
+        @Override
+        public void onProviderEnabled(String provider) { }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            // TODO Auto-generated method stub
+
+        }
+
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -47,12 +95,27 @@ public class MyActivity extends Activity {
         myDb = new DBAdapter(this);
         myDb.open();
     }
+
+    private void initializeLocation(){
+        gpsManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        gpsListener = new LocationManagerHelper();
+        gpsManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, gpsListener);
+
+        if(gpsManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            String msg = "Long: " + longitude + " Lat: " + latitude;
+            displayText(msg);
+            Log.i("GPS", "DOES THIS WORK");
+        } else{
+            displayText("GPS DISABLED");
+        }
+    }
+
     private void closeDB() {
         myDb.close();
     }
 
     private void displayText(String message) {
-        TextView textView = (TextView) findViewById(R.id.textDisplay);
+        textView = (TextView) findViewById(R.id.textDisplay);
         textView.setText(message);
     }
 
@@ -64,9 +127,14 @@ public class MyActivity extends Activity {
     public void onClick_AddRecord(View v) {
         displayText("Clicked add record!");
 
+        //Test Longitude and Latitude
+        //Need Error Checking
+        longitude = Integer.parseInt(longitudeButton.getText().toString());
+        latitude = Integer.parseInt(latitudeButton.getText().toString());
+
         //long newId = myDb.insertRow("Jenny", "5556");
-        if(nameButton.getText().toString() != null && phoneButton.getText().toString() != null) {
-            long newId = myDb.insertRow(nameButton.getText().toString(), phoneButton.getText().toString());
+        if(!nameButton.getText().toString().equals("Name") && !phoneButton.getText().toString().equals("Phone")) {
+            long newId = myDb.insertRow(nameButton.getText().toString(), phoneButton.getText().toString(), (int)longitude, (int)latitude);
             // Query for the record we just added.
             // Use the ID:
             Cursor cursor = myDb.getRow(newId);
@@ -74,8 +142,6 @@ public class MyActivity extends Activity {
         } else {
             displayText("Invalid Entry");
         }
-
-
     }
 
     public void onClick_ClearAll(View v){
@@ -90,9 +156,10 @@ public class MyActivity extends Activity {
         displayRecordSet(cursor);
     }
 
-    public void onClick_SendText(View v){
+    public void onClick_SetDestination(View v){
         Cursor cursor = myDb.getAllRows();
         sendTextToName(cursor);
+
     }
 
     // Display an entire recordset to the screen.
@@ -107,11 +174,15 @@ public class MyActivity extends Activity {
                 int id = cursor.getInt(DBAdapter.COL_ROWID);
                 String name = cursor.getString(DBAdapter.COL_NAME);
                 String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
+                int longitudeCoord = cursor.getInt(DBAdapter.COL_LONG);
+                int latitudeCoord = cursor.getInt(DBAdapter.COL_LAT);
 
                 // Append data to the message:
                 message += "id=" + id
                         +", Name=" + name
                         +", Phone=" + phoneNum
+                        +", Long=" + longitudeCoord
+                        +", Lat=" + latitudeCoord
                         +"\n";
             } while(cursor.moveToNext());
         }
@@ -135,11 +206,10 @@ public class MyActivity extends Activity {
                     clearDisplayText();
                     String msg = "Texting " + nameButton.getText().toString();
                     Toast.makeText(MyActivity.this, msg, Toast.LENGTH_LONG).show();
-                    sendSMS(phoneNum, "I'm Outsideeeee!");
+                    sendSMS(phoneNum, "Hello from Brian's Android Program");
+
                     break;
                 }
-
-
             } while(cursor.moveToNext());
             cursor.close();
         }

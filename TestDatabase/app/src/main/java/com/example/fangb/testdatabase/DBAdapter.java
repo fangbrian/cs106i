@@ -28,19 +28,23 @@ public class DBAdapter {
     // TODO: Setup your fields here:
     public static final String KEY_NAME = "name";
     public static final String KEY_PHONE = "phonenum";
+    public static final String KEY_LONG = "longitude";
+    public static final String KEY_LAT = "latitude";
 
     // TODO: Setup your field numbers here (0 = KEY_ROWID, 1=...)
     public static final int COL_NAME = 1;
     public static final int COL_PHONE = 2;
+    public static final int COL_LONG = 3;
+    public static final int COL_LAT = 4;
 
 
-    public static final String[] ALL_KEYS = new String[] {KEY_ROWID, KEY_NAME, KEY_PHONE};
+    public static final String[] ALL_KEYS = new String[] {KEY_ROWID, KEY_NAME, KEY_PHONE, KEY_LONG, KEY_LAT};
 
     // DB info: it's name, and the table we are using (just one).
     public static final String DATABASE_NAME = "MyDb";
     public static final String DATABASE_TABLE = "mainTable";
     // Track DB version if a new version of your app changes the format.
-    public static final int DATABASE_VERSION = 6;
+    public static final int DATABASE_VERSION = 7;
 
     private static final String DATABASE_CREATE_SQL =
             "create table " + DATABASE_TABLE
@@ -57,7 +61,9 @@ public class DBAdapter {
                     //  - "not null" means it is a required field (must be given a value).
                     // NOTE: All must be comma separated (end of line!) Last one must have NO comma!!
                     + KEY_NAME + " text not null, "
-                    + KEY_PHONE + " text not null"
+                    + KEY_PHONE + " text not null, "
+                    + KEY_LONG + " integer not null, "
+                    + KEY_LAT + " integer not null "
 
                     // Rest  of creation:
                     + ");";
@@ -89,7 +95,7 @@ public class DBAdapter {
     }
 
     // Add a new set of values to the database.
-    public long insertRow(String name, String phoneNumber) {
+    public long insertRow(String name, String phoneNumber, int longitude, int latitude) {
 		/*
 		 * CHANGE 3:
 		 */
@@ -99,6 +105,8 @@ public class DBAdapter {
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_NAME, name);
         initialValues.put(KEY_PHONE, phoneNumber);
+        initialValues.put(KEY_LONG, longitude);
+        initialValues.put(KEY_LAT, latitude);
 
         // Insert it into the database.
         return db.insert(DATABASE_TABLE, null, initialValues);
@@ -144,7 +152,7 @@ public class DBAdapter {
     }
 
     // Change an existing row to be equal to new data.
-    public boolean updateRow(long rowId, String name, String phoneNumber) {
+    public boolean updateRow(long rowId, String name, String phoneNumber, int longitude, int latitude) {
         String where = KEY_ROWID + "=" + rowId;
 
 		/*
@@ -156,6 +164,8 @@ public class DBAdapter {
         ContentValues newValues = new ContentValues();
         newValues.put(KEY_NAME, name);
         newValues.put(KEY_PHONE, phoneNumber);
+        newValues.put(KEY_LONG, longitude);
+        newValues.put(KEY_LAT, latitude);
 
         // Insert it into the database.
         return db.update(DATABASE_TABLE, newValues, where, null) != 0;

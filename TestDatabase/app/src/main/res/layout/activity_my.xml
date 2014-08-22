@@ -20,9 +20,9 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send Text"
-            android:id="@+id/btnSendText"
-            android:onClick="onClick_SendText" />
+            android:text="Destination"
+            android:id="@+id/btnSetDestination"
+            android:onClick="onClick_SetDestination" />
 
     </LinearLayout>
 
@@ -48,6 +48,26 @@
         android:ems="10"
         android:id="@+id/phoneText"
         android:layout_below="@+id/nameText"
+        android:layout_alignParentStart="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Longitude"
+        android:ems="10"
+        android:id="@+id/longitudeText"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Latitude"
+        android:ems="10"
+        android:id="@+id/latitudeText"
+        android:layout_below="@+id/longitudeText"
         android:layout_alignParentStart="true" />
 
 </RelativeLayout>
