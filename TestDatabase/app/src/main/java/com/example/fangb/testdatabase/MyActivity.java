@@ -39,7 +39,8 @@ public class MyActivity extends Activity {
     private double longitude;
     private double latitude;
     private Location destination = null;
-    private static int DESTINATION_THRESHOLD_METERS = 100;
+    private static int DESTINATION_THRESHOLD_METERS = 100000;
+    private Destination currDestination;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,7 @@ public class MyActivity extends Activity {
         phoneButton = (EditText) findViewById(R.id.phoneText);
         longitudeButton = (EditText) findViewById(R.id.longitudeText);
         latitudeButton = (EditText) findViewById(R.id.latitudeText);
+        currDestination = new Destination("", 0, 0, false);
         latitude = 0;
         longitude = 0;
         openDB();
@@ -63,10 +65,20 @@ public class MyActivity extends Activity {
             if(loc != null) {
                 double lat = loc.getLatitude();
                 double longi = loc.getLongitude();
-                lat = 10;
-                longi = 10;
+
                 String msg = "Long: " + lat + " Lat: " + longi;
                 displayText(msg);
+
+                if(loc.distanceTo(currDestination.getLocation()) <= DESTINATION_THRESHOLD_METERS ){
+                    if(currDestination.valid()) {
+                        //Send Text
+                        //Cursor cursor = myDb.getAllRows();
+                        //sendTextToName(cursor);
+                        displayText("THRESHOLD MET. YOU'RE CLOSE");
+                        //Clear Current Destination
+                        currDestination.clearAll();
+                    }
+                }
             }
         }
 
@@ -151,15 +163,14 @@ public class MyActivity extends Activity {
 
     public void onClick_DisplayRecords(View v){
         displayText("Clicked display record!");
-
         Cursor cursor = myDb.getAllRows();
         displayRecordSet(cursor);
     }
 
     public void onClick_SetDestination(View v){
         Cursor cursor = myDb.getAllRows();
-        sendTextToName(cursor);
-
+        //sendTextToName(cursor);
+        setCurrentDestination(cursor);
     }
 
     // Display an entire recordset to the screen.
@@ -196,23 +207,58 @@ public class MyActivity extends Activity {
     }
 
     private void sendTextToName(Cursor cursor){
-        if (cursor.moveToFirst()) {
-            do {
-                // Process the data:
-                int id = cursor.getInt(DBAdapter.COL_ROWID);
-                String name = cursor.getString(DBAdapter.COL_NAME);
-                if(name.equals(nameButton.getText().toString())) {
-                    String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
-                    clearDisplayText();
-                    String msg = "Texting " + nameButton.getText().toString();
-                    Toast.makeText(MyActivity.this, msg, Toast.LENGTH_LONG).show();
-                    sendSMS(phoneNum, "Hello from Brian's Android Program");
+        if(!currDestination.getName().equals("") && currDestination.valid()){
+            if (cursor.moveToFirst()) {
+                do {
+                    // Process the data:
+                    int id = cursor.getInt(DBAdapter.COL_ROWID);
+                    String name = cursor.getString(DBAdapter.COL_NAME);
+                    if (name.equals(currDestination.getName())) {
+                        String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
+                        clearDisplayText();
+                        String msg = "Texting " + name;
+                        Toast.makeText(MyActivity.this, msg, Toast.LENGTH_LONG).show();
+                        sendSMS(phoneNum, "Hello from Brian's Android Program");
 
-                    break;
-                }
-            } while(cursor.moveToNext());
+                        break;
+                    }
+                } while (cursor.moveToNext());
+        }
             cursor.close();
         }
+    }
+
+    private void setCurrentDestination(Cursor cursor){
+        if (cursor.moveToFirst()) {
+            currDestination.clearAll();
+            //DEBUG
+            String message = "";
+            do {
+                int id = cursor.getInt(DBAdapter.COL_ROWID);
+                String name = cursor.getString(DBAdapter.COL_NAME);
+                if (name.equals(nameButton.getText().toString())) {
+                    // Process the data:
+                    String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
+                    int longitudeCoord = cursor.getInt(DBAdapter.COL_LONG);
+                    int latitudeCoord = cursor.getInt(DBAdapter.COL_LAT);
+                    //DEBUG: memory leak?
+                    currDestination.setName(name);
+                    currDestination.setLong(longitudeCoord);
+                    currDestination.setLat(latitudeCoord);
+                    currDestination.setValid(true);
+                    //DEBUG
+                    message += "Set Destination Name=" + currDestination.getName()
+                            + ", Long=" + currDestination.getLong()
+                            + ", Lat=" + currDestination.getLat();
+                    displayText(message);
+                    break;
+
+                }
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
     }
 }
 
