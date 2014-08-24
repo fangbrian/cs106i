@@ -3,6 +3,8 @@ package com.example.fangb.testdatabase;
         import android.app.Activity;
         import android.content.Context;
         import android.database.Cursor;
+        import android.location.Address;
+        import android.location.Geocoder;
         import android.location.Location;
         import android.location.LocationListener;
         import android.location.LocationManager;
@@ -13,6 +15,9 @@ package com.example.fangb.testdatabase;
         import android.widget.EditText;
         import android.widget.TextView;
         import android.widget.Toast;
+
+        import java.io.IOException;
+        import java.util.List;
 
 /*
  * Steps to using the DB:
@@ -31,16 +36,20 @@ public class MyActivity extends Activity {
     DBAdapter myDb;
     private EditText nameButton;
     private EditText phoneButton;
-    private EditText longitudeButton;
-    private EditText latitudeButton;
+    //private EditText longitudeButton;
+   //private EditText latitudeButton;
     public TextView textView;
     private LocationManager gpsManager;
     private LocationListener gpsListener;
     private double longitude;
     private double latitude;
     private Location destination = null;
-    private static int DESTINATION_THRESHOLD_METERS = 100000;
+    private static int DESTINATION_THRESHOLD_METERS = 250;
+    private static int LEAVING = 1;
+    private static int ARRIVED = 2;
     private Destination currDestination;
+    private Context a;
+    Location currLocation = new Location("");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +58,12 @@ public class MyActivity extends Activity {
 
         nameButton = (EditText) findViewById(R.id.nameText);
         phoneButton = (EditText) findViewById(R.id.phoneText);
-        longitudeButton = (EditText) findViewById(R.id.longitudeText);
-        latitudeButton = (EditText) findViewById(R.id.latitudeText);
+        //longitudeButton = (EditText) findViewById(R.id.longitudeText);
+        //latitudeButton = (EditText) findViewById(R.id.latitudeText);
         currDestination = new Destination("", 0, 0, false);
+        currLocation.setLongitude(0);
+        currLocation.setLatitude(0);
+        a = this;
         latitude = 0;
         longitude = 0;
         openDB();
@@ -63,21 +75,31 @@ public class MyActivity extends Activity {
         @Override
         public void onLocationChanged(Location loc) {
             if(loc != null) {
+                currLocation = loc;
                 double lat = loc.getLatitude();
                 double longi = loc.getLongitude();
 
-                String msg = "Long: " + lat + " Lat: " + longi;
-                displayText(msg);
 
-                if(loc.distanceTo(currDestination.getLocation()) <= DESTINATION_THRESHOLD_METERS ){
-                    if(currDestination.valid()) {
+                if(currDestination.valid()){
+                    //DEBUG
+                    String msg = "Distance from: " + loc.distanceTo(currDestination.getLocation());
+                    displayText(msg);
+
+                    //Check distance and see if we have met threshold
+                    if(loc.distanceTo(currDestination.getLocation()) <= DESTINATION_THRESHOLD_METERS ) {
                         //Send Text
-                        //Cursor cursor = myDb.getAllRows();
-                        //sendTextToName(cursor);
+                        Cursor cursor = myDb.getAllRows();
+                        sendTextToName(cursor, ARRIVED);
                         displayText("THRESHOLD MET. YOU'RE CLOSE");
                         //Clear Current Destination
                         currDestination.clearAll();
                     }
+
+
+
+                } else {
+                    String msg = "Long: " + lat + " Lat: " + longi;
+                    displayText(msg);
                 }
             }
         }
@@ -141,12 +163,28 @@ public class MyActivity extends Activity {
 
         //Test Longitude and Latitude
         //Need Error Checking
-        longitude = Integer.parseInt(longitudeButton.getText().toString());
-        latitude = Integer.parseInt(latitudeButton.getText().toString());
+        //longitude = Integer.parseInt(longitudeButton.getText().toString());
+        //latitude = Integer.parseInt(latitudeButton.getText().toString());
+
+/*
+        Geocoder gc = new Geocoder(a.getApplicationContext());
+        //if(gc.isPresent()){
+            try{
+                List<Address> list = gc.getFromLocationName("1600 Amphitheatre Parkway, Mountain View, CA", 1);
+                Address address = list.get(0);
+
+                longitude = address.getLatitude();
+                latitude = address.getLongitude();
+            }catch(IOException e){
+
+            }
+        //}
+        */
 
         //long newId = myDb.insertRow("Jenny", "5556");
         if(!nameButton.getText().toString().equals("Name") && !phoneButton.getText().toString().equals("Phone")) {
-            long newId = myDb.insertRow(nameButton.getText().toString(), phoneButton.getText().toString(), (int)longitude, (int)latitude);
+            long newId = myDb.insertRow(nameButton.getText().toString(), phoneButton.getText().toString(),
+                    currLocation.getLongitude(), currLocation.getLatitude());
             // Query for the record we just added.
             // Use the ID:
             Cursor cursor = myDb.getRow(newId);
@@ -171,6 +209,8 @@ public class MyActivity extends Activity {
         Cursor cursor = myDb.getAllRows();
         //sendTextToName(cursor);
         setCurrentDestination(cursor);
+        Cursor cursor2 = myDb.getAllRows();
+        sendTextToName(cursor2, LEAVING);
     }
 
     // Display an entire recordset to the screen.
@@ -185,8 +225,8 @@ public class MyActivity extends Activity {
                 int id = cursor.getInt(DBAdapter.COL_ROWID);
                 String name = cursor.getString(DBAdapter.COL_NAME);
                 String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
-                int longitudeCoord = cursor.getInt(DBAdapter.COL_LONG);
-                int latitudeCoord = cursor.getInt(DBAdapter.COL_LAT);
+                double longitudeCoord = cursor.getDouble(DBAdapter.COL_LONG);
+                double latitudeCoord = cursor.getDouble(DBAdapter.COL_LAT);
 
                 // Append data to the message:
                 message += "id=" + id
@@ -206,7 +246,7 @@ public class MyActivity extends Activity {
         sms.sendTextMessage(phoneNumber, null, message, null, null);
     }
 
-    private void sendTextToName(Cursor cursor){
+    private void sendTextToName(Cursor cursor, int action){
         if(!currDestination.getName().equals("") && currDestination.valid()){
             if (cursor.moveToFirst()) {
                 do {
@@ -218,7 +258,18 @@ public class MyActivity extends Activity {
                         clearDisplayText();
                         String msg = "Texting " + name;
                         Toast.makeText(MyActivity.this, msg, Toast.LENGTH_LONG).show();
-                        sendSMS(phoneNum, "Hello from Brian's Android Program");
+                        String msgText = "";
+                        switch(action){
+                            case 1:
+                                msgText = "I'm leaving now. Be there soon.";
+                                break;
+                            case 2:
+                                msgText = "Hey come outside. I'm here.";
+                                break;
+                            default:
+                                break;
+                        }
+                        sendSMS(phoneNum, msgText);
 
                         break;
                     }
@@ -239,8 +290,8 @@ public class MyActivity extends Activity {
                 if (name.equals(nameButton.getText().toString())) {
                     // Process the data:
                     String phoneNum = cursor.getString(DBAdapter.COL_PHONE);
-                    int longitudeCoord = cursor.getInt(DBAdapter.COL_LONG);
-                    int latitudeCoord = cursor.getInt(DBAdapter.COL_LAT);
+                    double longitudeCoord = cursor.getDouble(DBAdapter.COL_LONG);
+                    double latitudeCoord = cursor.getDouble(DBAdapter.COL_LAT);
                     //DEBUG: memory leak?
                     currDestination.setName(name);
                     currDestination.setLong(longitudeCoord);
@@ -251,6 +302,7 @@ public class MyActivity extends Activity {
                             + ", Long=" + currDestination.getLong()
                             + ", Lat=" + currDestination.getLat();
                     displayText(message);
+
                     break;
 
                 }
