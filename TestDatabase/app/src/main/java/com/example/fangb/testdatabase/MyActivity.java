@@ -13,11 +13,13 @@ package com.example.fangb.testdatabase;
         import android.util.Log;
         import android.view.View;
         import android.widget.EditText;
+        import android.widget.ProgressBar;
         import android.widget.TextView;
         import android.widget.Toast;
 
         import java.io.IOException;
         import java.util.List;
+        import android.os.Handler;
 
 /*
  * Steps to using the DB:
@@ -49,7 +51,12 @@ public class MyActivity extends Activity {
     private static int ARRIVED = 2;
     private Destination currDestination;
     private Context a;
-    Location currLocation = new Location("");
+    private Location currLocation = new Location("");
+    private ProgressBar progressInterface;
+    private double initialDistance;
+    private double currentDistance;
+    private int progressStatus = 0;
+    private Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,9 @@ public class MyActivity extends Activity {
 
         nameButton = (EditText) findViewById(R.id.nameText);
         phoneButton = (EditText) findViewById(R.id.phoneText);
+        progressInterface = (ProgressBar) findViewById(R.id.progressBar);
+        initialDistance = 0;
+        currentDistance = 0;
         //longitudeButton = (EditText) findViewById(R.id.longitudeText);
         //latitudeButton = (EditText) findViewById(R.id.latitudeText);
         currDestination = new Destination("", 0, 0, false);
@@ -81,8 +91,13 @@ public class MyActivity extends Activity {
 
 
                 if(currDestination.valid()){
+                    if(initialDistance == 0) {
+                        initialDistance = loc.distanceTo(currDestination.getLocation());
+                    }
+
+                    currentDistance = loc.distanceTo(currDestination.getLocation());
                     //DEBUG
-                    String msg = "Distance from: " + loc.distanceTo(currDestination.getLocation());
+                    String msg = "Initial Distance: " + initialDistance;
                     displayText(msg);
 
                     //Check distance and see if we have met threshold
@@ -93,6 +108,7 @@ public class MyActivity extends Activity {
                         displayText("THRESHOLD MET. YOU'RE CLOSE");
                         //Clear Current Destination
                         currDestination.clearAll();
+                        clearInternalDistances();
                     }
 
 
@@ -123,6 +139,11 @@ public class MyActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         closeDB();
+    }
+
+    private void clearInternalDistances(){
+        currentDistance = 0;
+        initialDistance = 0;
     }
 
     private void openDB() {
@@ -211,6 +232,33 @@ public class MyActivity extends Activity {
         setCurrentDestination(cursor);
         Cursor cursor2 = myDb.getAllRows();
         sendTextToName(cursor2, LEAVING);
+        StartProgressBar();
+    }
+
+    private void StartProgressBar(){
+        new Thread(new Runnable() {
+            public void run() {
+                while (progressStatus < 100) {
+                    if(initialDistance == 0){
+                        progressStatus = 0;
+                    } else {
+                        progressStatus = 1-(((int)currentDistance-DESTINATION_THRESHOLD_METERS)/((int)initialDistance-DESTINATION_THRESHOLD_METERS));
+                        //DEBUG
+                        String msg = "Progress Status: " + progressStatus;
+                        displayText(msg);
+                    }
+
+
+
+                    // Update the progress bar
+                    mHandler.post(new Runnable() {
+                        public void run() {
+                            progressInterface.setProgress(progressStatus);
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     // Display an entire recordset to the screen.
@@ -311,6 +359,7 @@ public class MyActivity extends Activity {
         }
 
         cursor.close();
+        initialDistance = 0;
     }
 }
 
